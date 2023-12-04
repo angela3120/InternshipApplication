@@ -1,0 +1,62 @@
+import numpy as np
+import matplotlib.pyplot as plt
+plt.ion()
+
+#%% Given variables 
+
+ts = .33 #systolic time
+HR = 72 #beat/min
+Qo = 370 #initial systolic flow rate (mL/s)
+R = 1.05 #arterial resistance mmHg-sec/cm^3
+C = 1.18 #arterial compliance cm^3/mmHg 
+
+#%%
+
+CardiacC = 60/HR #cardiac cycle in secs
+td = CardiacC - ts #period of diastole
+time = np.arange(0,10,0.01) #creates set of time values from 0 secs to 10 secs, 0.01 sec interval
+length = int(10/0.01)
+
+#creates list that is same length as time list
+dPdt = np.zeros(length)
+dPdtA = np.zeros(length)
+dPdtB = np.zeros(length)
+dPdtC = np.zeros(length)
+
+#initial pressure value which is the diastolic pressure (75 chosen bc <80 mmHg is normal pressure)
+dPdt[0] = 75
+dPdtA[0] = 75
+dPdtB[0] = 75
+dPdtC[0] = 75
+
+CompArt = .65 #arteriosclerosis compliance
+ResArt = 1.25 #arteriosclerosis resistance (increase)
+ResAng = .95 #angina resistance (decrease)
+
+#%%
+for i in range(0,len(time)-1): #iterates through the time values
+    t = time[i] % CardiacC
+    if t <= ts: #during systole
+        Qh = Qo*np.sin(np.pi*t/ts)
+    else: #other times would be during diastole
+        Qh = 0
+
+    #Euler Method
+    dPdt[i+1]= dPdt[i] + 0.01*(Qh/C - (dPdt[i]/(R*C))) #Pressure for given variables
+    dPdtA[i+1]= dPdtA[i] + 0.01*(Qh/CompArt - (dPdtA[i]/(R*CompArt)))#Pressure for question A with compliance change
+    dPdtB[i+1]= dPdtB[i] + 0.01*(Qh/CompArt - (dPdtB[i]/(ResArt*CompArt)))#Pressure for B with compliance + resistance change
+    dPdtC[i+1]= dPdtC[i] + 0.01*(Qh/CompArt - (dPdtC[i]/(ResAng*CompArt)))#Pressure for C with resistance change
+
+
+
+#%%
+fig = plt.figure(num=1, clear=True)
+ax = fig.add_subplot(1, 1, 1)
+ax.plot(time,dPdt, label = 'Normal Conditions')
+ax.plot(time,dPdtA,  label = 'Compliance Change (Arteriosclerosis)')
+#ax.plot(time,dPdtB,  label = 'Compliance + Resistance Change (Arteriosclerosis)')
+#ax.plot(time,dPdtC,  label = 'Resistance Change (Angina)')
+ax.grid(True)
+ax.set_xlabel('Time (s)')
+ax.set_ylabel('Pressure (mmHg)')
+ax.legend()
