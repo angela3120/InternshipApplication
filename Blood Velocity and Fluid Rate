@@ -1,0 +1,37 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+plt.ion
+
+deltaP = 1886.3 #(g/(cm*s^2))
+R = 0.3 #cm
+mu = 0.03 #viscosity (cm*s^2)
+L = 20 #cm
+r = np.arange(0,R+0.01,0.01) #add 0.01 to desired endpoint since arange doesnt include endpoint in list of values
+
+vz = np.zeros(len(r))
+
+for i in range(0,len(r)-1):
+    vz[i] = ((deltaP*R**2)/(4*mu*L)) * (1-(r[i]**2/R**2))
+    
+    
+#shear stress given by
+#viscosity * dvz/dr
+#to find between wall and center, find derivative @ .15
+    
+dvzdr = -(deltaP * .15)/(2*mu*L)
+    #r = .15 in this case
+vzpoint = ((deltaP*R**2)/(4*mu*L)) * (1-(.15**2/R**2))
+
+shear = dvzdr * mu
+    
+fig = plt.figure(num=1, clear=True)
+ax = fig.add_subplot(1, 1, 1)
+ax.plot(r,vz)
+plt.axline((.15,vzpoint),slope = dvzdr, label = 'tangent line for point between wall and vessel center',linestyle = 'dashed')
+ax.plot(0,0, label = 'shear stress @ r = .15cm: tangent line slope * viscosity =' +str(shear))
+ax.legend()
+ax.grid(True)
+ax.set_xlabel('Radius (cm)')
+ax.set_ylabel('Blood velocity')
+
