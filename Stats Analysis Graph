@@ -1,0 +1,102 @@
+
+# %% Import modules
+import numpy as np
+import matplotlib.pyplot as plt
+plt.ion()
+from lab9_common import *
+
+# %% Load and manipulate data
+x = np.array([0, 2, 4, 6, 9, 11, 12, 15, 17, 19])
+y = np.array([5, 6, 7, 6, 9, 8, 8, 10, 12, 12])
+pts = len(x)
+
+xmodel = np.linspace(np.min(x), np.max(x), 100)
+ymodel = np.linspace(np.min(y),np.max(y),100)
+# %% y of x
+
+yofx = np.polyfit(x,y,1)
+
+print("y-int:") 
+print(yofx[1])
+
+
+print("slope:")
+print(yofx[0])
+
+
+yhat = np.polyval(yofx,x)
+stats = calc_stats(y, yhat)
+
+
+r = np.sqrt(stats[2])
+print("r:")
+print(r)
+
+
+error = np.sqrt(stats[1]/(pts-2))
+print("error:")
+print(error)
+
+print("----------------")
+
+#%% x of y
+
+xofy = np.polyfit(y,x,1)
+
+print("y-int:") 
+print(xofy[1])
+
+
+print("slope:")
+print(xofy[0])
+
+
+xhat = np.polyval(xofy, y)
+stats1 = calc_stats(x, xhat)
+
+
+r = np.sqrt(stats1[2])
+print("r:")
+print(r)
+
+
+error = np.sqrt(stats1[1]/(pts-2))
+print("error:")
+print(error)
+
+#%%
+
+fig = plt.figure(num=1, clear=True)
+fig.set_size_inches(6, 4, forward=True)
+ax = fig.add_subplot(2, 1, 1)
+ax1 = fig.add_subplot(2, 1, 2)
+
+bestliney = []
+i = 0 
+while i < len(xmodel):
+    bestliney.append(yofx[0]*xmodel[i] + yofx[1])
+    i=i+1
+
+ax.plot(x, y, 'o', markerfacecolor='r', markeredgecolor = 'r')
+ax.plot(x, yhat, 's', markerfacecolor = 'w', markeredgecolor = 'r')
+ax.plot(xmodel,ymodel,'k')
+ax.grid(True)
+ax.legend(['$Data$', '$Estimates$', '$Model$'],  loc='best')
+
+
+
+
+bestlinex = []
+i = 0 
+while i < len(ymodel):
+    bestlinex.append(xofy[0]*ymodel[i] + xofy[1])
+    i=i+1
+
+
+ax1.plot(y, x, 'o', markerfacecolor='r', markeredgecolor = 'r')
+ax1.plot(y, xhat, 's', markerfacecolor = 'w', markeredgecolor = 'r')
+ax1.plot(ymodel, xmodel,'k')
+ax1.grid(True)
+ax1.legend(['$Data$', '$Estimates$', '$Model$'],  loc='best')
+fig.tight_layout()
+fig.savefig("chapra_14_005_plot.png")
