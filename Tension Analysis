@@ -1,0 +1,96 @@
+#6061-t6 aluminum 
+import numpy as np
+import matplotlib.pyplot as plt
+area = np.pi * (6.44/2)**2 #cross sectional area = pi r squared units (units in mm)
+
+#%%Raw data
+lab_data = np.loadtxt("2023Sep25_1629_GroupA.txt", skiprows = 15, max_rows= 461)
+
+load = lab_data[:,0] #units: newtons
+strainPercent = lab_data[:,2] 
+
+fig = plt.figure(num = 4, clear = True)
+ax = fig.add_subplot(1,1,1)
+ax.plot(strainPercent, load) #load (y) vs strain percent(x)
+ax.grid(True)
+ax.set(title = "Raw Data: Load vs Strain Percent", xlabel = "Strain Percent (%)", ylabel = "Load (Newtons)")
+fig.savefig("RawData.png")
+
+#%% Full range of stress vs strain
+lab_data = np.loadtxt("2023Sep25_1629_GroupA.txt", skiprows = 15, max_rows= 200)
+
+load = lab_data[:,0] #units: newtons
+strainPercent = lab_data[:,2] 
+
+strain = strainPercent/100 #mm
+nomStress = load/area #MPa
+
+fig = plt.figure(num = 1, clear = True)
+ax = fig.add_subplot(1,1,1)
+ax.plot(strain, nomStress) #stress (y) vs strain(x)
+ax.grid(True)
+ax.set(title = "Full Range of Stress vs Strain", xlabel = "Strain (mm/mm)", ylabel = "Full Range Stress (MPa)")
+fig.savefig("FullRangeStressStrain.png")
+
+
+#%% Reduced range of stress vs strain
+linlab_data = np.loadtxt("2023Sep25_1629_GroupA.txt", skiprows = 15, max_rows=130)
+
+
+linload = linlab_data[:,0] #units: Newtons
+linstrainPercent = linlab_data[:,2] #units: percent
+
+linstress = linload/area #MPa
+linstrain = linstrainPercent/100 #mm/mm
+
+fig = plt.figure(num = 2, clear = True)
+ax = fig.add_subplot(1,1,1)
+ax.plot(linstrain,linstress) #stress (y) vs strain(x)xlim = ([0,])
+ax.grid(True)
+
+
+ax.set(title = "Reduced Range of Stress vs Strain", xlabel = "Strain (mm/mm)", ylabel = "Reduced Range Stress (MPa)")
+fig.savefig("ReducedRangeStressStrain.png")
+
+#%% Young's Modulus Calculation
+
+linear_fit = np.polyfit(linstrain, linstress,1)
+print(linear_fit)
+E = linear_fit[0]
+print("Young's Modulus of 6061-t6 Aluminum:", E, "MPa")
+
+#%% Yield Stress and Ultimate Stress
+offsetlab_data = np.loadtxt("2023Sep25_1629_GroupA.txt", skiprows = 15, max_rows=140)
+offsetstrainPercent = offsetlab_data[:,2]
+offsetstrain = offsetstrainPercent/100 
+offsetstress = (E * offsetstrain) + linear_fit[1]
+
+fig = plt.figure(num = 3, clear = True)
+ax = fig.add_subplot(1,1,1)
+ax.plot(strain,nomStress) #stress (y) vs strain(x)
+ax.plot(offsetstrain,offsetstress)
+ax.plot(offsetstrain + 0.002, offsetstress, label = '0.2% Strain Offset Line')
+ax.grid(True)
+
+ax.set(title = "Stress-Strain Curve with Yield Point Estimate", xlabel = "Strain (mm/mm)", ylabel = "Stress (MPa)")
+fig.savefig("StressStrainCurve.png")
+
+yieldStress = E*max(offsetstrain)
+ax.plot(max(offsetstrain)  + 0.002, yieldStress, marker = 'o', label = 'Yield Stress Estimate')
+print("Yield Stress for 6061-t6 Aluminum:", yieldStress, "MPa")
+ax.legend()
+
+ultimateStress = max(nomStress)
+print("Ultimate Stress for 6061-t6 Aluminum:", ultimateStress, "MPa")
+
+#%% Percent Errors
+
+#actual values:
+    #69000 MPa, 210 MPa, 280 MPa
+
+youngsError = (np.abs(69000-E)/(69000))*100
+yieldError = (np.abs(210-yieldStress)/(210))*100
+ultimateError = (np.abs(290-ultimateStress)/(290))*100
+print("Young's Modulus Error:", youngsError, "%")
+print("Yield Stress Error:", yieldError, "%")
+print("Ultimate Stress Error::", ultimateError, "%")
