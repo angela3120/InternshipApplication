@@ -1,0 +1,89 @@
+#6061-t6 aluminum 
+import numpy as np
+import matplotlib.pyplot as plt
+
+L = 21.9/100 #cm to meters
+
+Diameter = 19.32/1000 #mm to meters
+
+#%%Raw data graph
+#in torque
+lab_data = np.loadtxt("C:/Users/Angela Claveria/Downloads/egr201torsion.txt", skiprows = 1)
+rotation = lab_data[:,2]  #degrees
+torque = lab_data[:,0] #kg-cm
+
+fig = plt.figure(num = 1, clear = True)
+ax = fig.add_subplot(1,1,1)
+ax.plot(rotation, torque) #load (y) vs strain percent(x)
+ax.grid(True)
+ax.set(title = "Torque vs Rotation (Raw data)", ylabel = "Torque (kg-cm)", xlabel = "Rotation (degrees)")
+
+
+#%%Converted data graph
+lab_data = np.loadtxt("C:/Users/Angela Claveria/Downloads/egr201torsion.txt", skiprows = 1)
+rotation = lab_data[:,3] #radians
+torque = lab_data[:,1] #newton meters
+
+shear = (Diameter/2)/L * rotation
+
+fig = plt.figure(num = 2, clear = True)
+ax = fig.add_subplot(1,1,1)
+ax.plot(shear, torque) #load (y) vs strain percent(x)
+ax.grid(True)
+ax.set(title = "Torque vs Shear Strain", ylabel = "Torque (N-m)", xlabel = "Shear Strain")
+
+linear_shear = shear[0:39]
+linear_torque = torque[0:39]
+
+
+lin_fit = np.polyfit(linear_shear, linear_torque, 1)
+slope = lin_fit[0]
+yint = lin_fit[1]
+
+
+fig = plt.figure(num = 3, clear = True)
+ax = fig.add_subplot(1,1,1)
+ax.plot(shear, torque) #load (y) vs strain percent(x)
+plt.xlim(0, .012)
+ax.grid(True)
+ax.set(title = "Torque vs Reduced Shear Strain", ylabel = "Torque (N-m)", xlabel = "Shear Strain")
+
+
+J = (np.pi / 2) * (Diameter/2)**4
+G = (slope)*((Diameter/2)/J )
+Gest = G/(1*10**9)
+print("G", G, "pascals", Gest, "GPA")
+
+print("")
+offsetTorque = (slope * linear_shear) + yint
+
+fig = plt.figure(num = 4, clear = True)
+ax = fig.add_subplot(1,1,1)
+ax.plot(shear,torque)
+ax.plot(linear_shear, offsetTorque)
+ax.plot(linear_shear+.002, offsetTorque, label = '0.2% Strain Offset Line')
+ax.plot(max(linear_shear)+.002, max(offsetTorque),  marker = 'o', label = 'Yield Torque Estimate')
+ax.grid(True)
+ax.set(title = "Torque vs Shear Strain", ylabel = "Torque (N-m)", xlabel = "Shear Strain")
+plt.xlim(0, .06)
+ax.legend()
+yieldTorque = max(offsetTorque)
+
+yieldStress = yieldTorque * (Diameter/2)/J
+
+yie = yieldStress/(1*10**(6))
+ultimateTorque = max(torque)
+ultimateShear = (3*(Diameter/2))/(4*J) * ultimateTorque
+print("Yield Stress",yieldStress,"in pascals", yie, "in MPA")
+
+ult = ultimateShear/(1*10**(6))
+print("Ultimate Shear", ultimateShear, "in pascals,", ult, "in MPA")
+
+gError = (np.abs(26-Gest)/(26))*100
+yieldStressError = (np.abs(276-yie)/(276))*100
+ultShearError = (np.abs(207-ult)/(207))*100
+print("Shear Modulus Error:", gError, "%")
+print("Yield Stress Error:", yieldStressError, "%")
+print("Ultimate Shear Error::", ultShearError, "%")
+#https://www.thomasnet.com/articles/metals-metal-products/6061-aluminum/#:~:text=The%20shear%20strength%20of%206061,are%20summarized%20in%20Table%201.
+#source^^
