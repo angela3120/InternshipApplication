@@ -1,0 +1,52 @@
+import numpy as np
+import matplotlib.pyplot as plt
+plt.ion()
+from lab9_common import *
+
+# %% Load and manipulate data
+t = np.array([0.5, 1, 2, 3, 4, 5, 6, 7, 9])
+p = np.array([6, 4.4, 3.2, 2.7, 2, 1.9, 1.7, 1.4, 1.1])
+
+# %% Rename and create model data
+xv = np.reshape(t, (-1, 1))
+yv = np.reshape(p, (-1, 1))
+xmodel = np.linspace(np.min(xv), np.max(xv), 100)
+
+# %% Perform calculations
+
+def yfunction(xe, coefs):
+    ans = coefs[0] * np.exp(-1.5*xe) + coefs[1]*np.exp(-0.3*xe) + coefs[2] *np.exp(-0.05*xe)
+    return(ans)
+
+function = np.block([[np.exp(-1.5*xv),np.exp(-0.3*xv), np.exp(-0.05*xv)]])
+pvec = np.linalg.lstsq(function, yv, rcond = None)[0]
+
+A = pvec[0]
+B = pvec[1]
+C = pvec[2]
+print('A:', A, 'B:', B,'C:', C)
+
+A = A*np.exp(t*(-1.5))
+B = B*np.exp(t*-0.3)
+C = C*np.exp(t*-0.05)
+
+yhat = yfunction(t,pvec)
+ymodel = yfunction(xmodel,pvec)
+
+stats = calc_stats(p,yhat)
+
+#%%
+
+fig = plt.figure(num=1, clear=True)
+fig.set_size_inches(6, 4, forward=True)
+ax = fig.add_subplot(1, 1, 1)
+ax.plot(xv,yv,'om')
+ax.plot(xmodel,ymodel,'k')
+ax.plot(t,A,'g-.')
+ax.plot(t,B,'r--')
+ax.plot(t,C,'b:')
+ax.legend(['$Data$', '$Model$', 'A concentration (organisms/cm$^3$)', 'B concentration (organisms/cm$^3$)', 'C concentration (organisms/cm$^3$)'],  loc='best')
+ax.grid(True)
+ax.set(title="Concentrations of Three Organisms in Seaweed over Time (aac90)", xlabel="time (days)", ylabel = "concentration (organisms/cm$^3$)")
+
+fig.savefig("chapra_15_010_plot.png")
