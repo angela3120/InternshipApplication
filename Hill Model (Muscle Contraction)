@@ -1,0 +1,34 @@
+import numpy as np
+import matplotlib.pyplot as plt
+plt.ion()
+
+Fo = 1.6017*(10)**6 #dynes
+a = 6.6964*(10)**5 #dynes
+b = 1.4177 #cm/s
+IsoLength = 5.106 #cm
+#The data used above are MATlab's estimates
+alpha = (Fo/IsoLength) 
+
+
+
+t0=0 #start time 
+tEnd=30 #end time 
+dT=0.001                 
+t=np.arange(t0,tEnd,dT)
+F = [None] * len(t)
+F[0] = 0
+
+
+for i in range(1,len(t)):
+    dF = (alpha) * ((b*(Fo-F[i-1]))/(F[i-1]+a)) * dT #gives us the change of force
+    F_new = F[i-1]+dF
+    F[i]=(F_new)
+
+
+fig = plt.figure(num=1, clear=True)
+ax = fig.add_subplot(1, 1, 1)
+ax.plot(t,F)
+ax.grid(True)
+ax.set_xlabel('Time (s)')
+ax.set_ylabel('Force (dynes)')
+fig.savefig("lab2bme.png")
