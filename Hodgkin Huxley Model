@@ -1,0 +1,115 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+gNa= 120  #this is a constant that multiplies with m^3*h to get Na conductance, units mS/cm^2                        
+gK=  36  #this is a constant that multiplies with n^4 to get K conductance, units mS/cm^2 
+GO= .3    #conductance per area for other currents (that aren't K or Na), is a constant and has units mS/cm^2                          
+Cm=  1 #membrane capacitance which is a constant and has units uF/cm^2                        
+Vr =  -60     #this value is the resting membrane potential, which was -60 mV for the squid setup                     
+ENa= 55 #nernst value for sodium, set to 55 mV during H-H experiment                    
+EK= -72   #nernst value for potassium, set to -72mV during H-H experiment     
+EO= -49.387   #nernst value for other currents not including Na and K, set to -49.387 mV during H-H experiment                
+                             
+M0 = 0.0528    #gating probability for activation gate of sodium                
+N0= 0.317       #gating probability for activation gate of potassium           
+H0= 0.598 #gating probability for inactivation gate of sodium                   
+
+Istim= 32   #smallest stimulus needed to trigger the action potential                     
+
+
+
+t0=0 
+tEnd=40 
+dt=0.01                    
+
+t=np.arange(t0,tEnd,dt) #np.arange gives the set of values between start time 0 and end time 40, each value being 0.01 apart      
+
+n=int((tEnd-t0)/dt)  #gives us the number of points in the time range               
+
+V=np.zeros(n)     
+N=np.zeros(n)     
+M=np.zeros(n)   
+H=np.zeros(n)  
+GNa=np.zeros(n)
+GK=np.zeros(n)              
+INa=np.zeros(n)  
+IK=np.zeros(n) 
+IO=np.zeros(n)             
+
+V[0]=Vr                           
+M[0]=M0 
+N[0]=N0                         
+H[0]=H0 
+
+for i in range(0,len(t)-1): #for loop that iterates through each point of time (in the time interval)
+    
+    GNa[i]=gNa*H[i]*M[i]**3       
+    GK[i]=gK*N[i]**4  
+    IK[i]=GK[i]*(V[i]-EK) 
+    IO[i]=GO*(V[i]-EO)
+    
+    vm=V[i]-Vr              
+     
+    
+    am=(0.1*(25-vm))/(np.exp((25-vm)/10)-1) 
+    bm=4*np.exp(-vm/18) 
+    an=(0.01*(10-vm))/(np.exp((10-vm)/10)-1) 
+    bn=0.125*np.exp(-vm/80) 
+    ah=0.07*np.exp(-vm/20) 
+    bh=1/(np.exp((30-vm)/10)+1) 
+    
+    N[i+1]=N[i]+dt*(an*(1-N[i])-bn*N[i]);          
+    M[i+1]=M[i]+dt*(am*(1-M[i])-bm*M[i]);    
+    H[i+1]=H[i]+dt*(ah*(1-H[i])-bh*H[i]); 
+    
+    
+    if t[i]>=5 and t[i]<=5.2:                              
+        V[i+1]=V[i]+dt*(-INa[i]-IK[i]-IO[i]+Istim)/Cm    #differential equation for during stimulus pulse 
+    elif t[i]>=20 and t[i]<=20.4:                              
+        V[i+1]=V[i]+dt*(-INa[i]-IK[i]-IO[i]+Istim+0)/Cm    #differential equation for during stimulus pulse                           
+                          
+    else:
+        V[i+1]=V[i]+dt*(-INa[i]-IK[i]-IO[i])/Cm   #differential equation for after stimulus pulse      
+  
+
+
+#the following code is for the graphs
+fig,ax = plt.subplots(3,1, figsize = (10,12))
+fig = plt.figure(num=1, clear=True)
+ax1 = fig.add_subplot(1, 1, 1)
+
+ax[0].plot(t,V)
+ax[0].set_title('Membrane Voltage (mv) vs Time (ms)')
+ax[0].set_xlabel('Time (ms)')
+ax[0].set_ylabel('Membrane Voltage (mv)')
+
+
+ax[1].plot(t,GK,label = "Conductance for Potassium (mS/cm^2)")
+GO = GO * np.ones(n) 
+ax[1].plot(t,GO, label = "Conductance for Other Ions (mS/cm^2)")
+ax[1].plot(t,GNa, label = "Conductance for Sodium (mS/cm^2)")
+ax[1].set_title('Ion Conductances vs Time')
+ax[1].set_xlabel('Time (ms)')
+ax[1].set_ylabel('Conductances (mS/cm^2)')
+ax[1].legend()
+
+ax[2].plot(t, N, label='Potassium Channel Activitation Probability (n)')
+ax[2].plot(t, M,  label='Sodium Channel Activitation Probability (m)')
+ax[2].plot(t, H, label='Sodium Channel Inactivitation Probability (h)')
+ax[2].set_title('Channel Opening Probabilities vs Time (ms)')
+ax[2].set_xlabel('Time (ms)')
+ax[2].set_ylabel('Probabilities')
+ax[2].legend()
+
+ax1.plot(t,INa, label = 'Sodium Current')
+ax1.plot(t,IK, label = 'Potassium Current')
+ax1.plot(t,IO, label = 'Other Ion Current')
+ax1.set_title('Ion Currents vs Time')
+ax1.set_xlabel('Time (ms)')
+ax1.set_ylabel('Currents (mv)')
+ax1.legend()
+
+
+fig.tight_layout()
+plt.show()
+  
